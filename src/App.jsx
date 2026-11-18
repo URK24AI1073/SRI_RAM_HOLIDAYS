@@ -189,11 +189,6 @@ const vehicles = [
     type: "Luxury Group Travel",
     image: "/images/force-urbania.jpeg",
   },
-  {
-  name: "Toyota Innova Crysta (Black)",
-  image: "/images/innova-cryst-black.jpeg",
-  description: "Spacious and comfortable premium travel"
-},
 ];
 
 function App() {
@@ -524,24 +519,45 @@ Thank you!`;
           </div>
         </section>
 
-        {/* SERVICES */}
-        <section className="services section" id="services">
-          <div className="section-heading">
-            <span>WHAT WE OFFER</span>
-            <h2>Travel Services For Every Journey</h2>
-            <p>From local rides to memorable holidays.</p>
-          </div>
+{/* SERVICES */}
+<section className="services section" id="services">
+  <div className="section-heading">
+    <span>WHAT WE OFFER</span>
+    <h2>Travel Services For Every Journey</h2>
+    <p>From local rides to memorable holidays.</p>
+  </div>
 
-          <div className="service-grid">
-            {services.map((service) => (
-              <article className="service-card" key={service.title}>
-                <div className="service-icon">{service.icon}</div>
-                <h3>{service.title}</h3>
-                <p>{service.description}</p>
-              </article>
-            ))}
-          </div>
-        </section>
+  <div className="service-grid">
+    {services.map((service) => (
+      <article
+        className="service-card"
+        key={service.title}
+        role="button"
+        tabIndex={0}
+        onClick={() => {
+          const message = `Hello Sri Ram Holidays! I am interested in your ${service.title}. Please share more details.`;
+          window.open(
+            `https://wa.me/918610731075?text=${encodeURIComponent(message)}`,
+            "_blank",
+            "noopener,noreferrer"
+          );
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            event.currentTarget.click();
+          }
+        }}
+      >
+        <div className="service-icon">{service.icon}</div>
+        <h3>{service.title}</h3>
+        <p>{service.description}</p>
+        <span className="service-link">Enquire Now →</span>
+      </article>
+    ))}
+  </div>
+</section>
+
 
         {/* DESTINATIONS */}
         <section className="destinations section" id="destinations">

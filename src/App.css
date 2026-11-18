@@ -1352,3 +1352,24 @@ footer small {
     width: 100%;
   }
 }
+.service-card {
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.service-card:hover {
+  transform: translateY(-7px);
+  box-shadow: 0 12px 30px rgba(16, 36, 58, 0.14);
+}
+
+.service-link {
+  display: inline-block;
+  margin-top: 15px;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.service-card:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 4px;
+}
