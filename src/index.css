@@ -18,3 +18,69 @@ body {
   width: 100%;
   min-height: 100vh;
 }
+
+/* STAY ROOM AVAILABILITY */
+.stay-section {
+  background: #f8f6f0;
+  padding: 80px 8%;
+}
+
+.stay-form {
+  max-width: 850px;
+  margin: 35px auto 0;
+  padding: 35px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 22px;
+}
+
+.stay-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  color: #142b46;
+  font-weight: 600;
+}
+
+.stay-form input,
+.stay-form select {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  font: inherit;
+  background: #fff;
+}
+
+.stay-form input:focus,
+.stay-form select:focus {
+  outline: 2px solid #c69b45;
+  border-color: #c69b45;
+}
+
+.stay-form .search-btn {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.stay-note {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+
+@media (max-width: 600px) {
+  .stay-form {
+    grid-template-columns: 1fr;
+    padding: 22px;
+  }
+
+  .stay-form .search-btn,
+  .stay-note {
+    grid-column: 1;
+  }
+}

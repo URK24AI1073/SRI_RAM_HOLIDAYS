@@ -20,6 +20,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import "./App.css";
+import { supabase } from "./supabaseClient";
 
 // Sightseeing images use PNG format
 const makePlaces = (prefix, names) =>
@@ -184,8 +185,87 @@ function App() {
   const [days, setDays] = useState("");
   const [passengers, setPassengers] = useState("2");
   const [specialRequests, setSpecialRequests] = useState("");
+  // Stay Room Enquiry
+const [stayDestination, setStayDestination] = useState("Ooty");
+const [checkIn, setCheckIn] = useState("");
+const [checkOut, setCheckOut] = useState("");
+const [guestCount, setGuestCount] = useState(2);
+const [roomCount, setRoomCount] = useState(1);
+
+  // Customer Reviews
+  const [reviews, setReviews] = useState([]);
+  const [customerName, setCustomerName] = useState("");
+  const [customerRating, setCustomerRating] = useState(5);
+  const [customerReview, setCustomerReview] = useState("");
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewMessage, setReviewMessage] = useState("");
+  const [reviewsLoading, setReviewsLoading] = useState(true);
 
   const phoneNumber = "918610731075";
+
+  // Load public reviews from Supabase
+  const fetchReviews = async () => {
+    const { data, error } = await supabase
+      .from("customer_reviews")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error loading reviews:", error.message);
+      setReviewsLoading(false);
+      return;
+    }
+
+    setReviews(data || []);
+    setReviewsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  // Submit customer review
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+
+    if (customerName.trim().length < 2) {
+      setReviewMessage("Please enter your name.");
+      return;
+    }
+
+    if (customerReview.trim().length < 10) {
+      setReviewMessage("Please write at least 10 characters.");
+      return;
+    }
+
+    setReviewLoading(true);
+    setReviewMessage("");
+
+    const { error } = await supabase
+      .from("customer_reviews")
+      .insert([
+        {
+          customer_name: customerName.trim(),
+          rating: customerRating,
+          review: customerReview.trim(),
+        },
+      ]);
+
+    setReviewLoading(false);
+
+    if (error) {
+      setReviewMessage("Unable to submit review. Please try again.");
+      console.error("Review submission error:", error.message);
+      return;
+    }
+
+    setCustomerName("");
+    setCustomerRating(5);
+    setCustomerReview("");
+    setReviewMessage("Thank you! Your review has been submitted.");
+
+    await fetchReviews();
+  };
 
   useEffect(() => {
     if (selectedRegion) {
@@ -260,6 +340,38 @@ Thank you!`;
     );
   };
 
+const handleStayEnquiry = () => {
+  if (!checkIn || !checkOut) {
+    alert("Please select check-in and check-out dates.");
+    return;
+  }
+
+  if (new Date(checkOut) <= new Date(checkIn)) {
+    alert("Check-out date must be after check-in date.");
+    return;
+  }
+
+  const message = `Hello SRI RAM HOLIDAYS!
+
+I would like to enquire about stay room availability.
+
+Destination: ${stayDestination}
+Check-in Date: ${checkIn}
+Check-out Date: ${checkOut}
+Guests: ${guestCount}
+Number of Rooms: ${roomCount}
+
+Please check room availability and share the details and price.
+
+Thank you!`;
+
+  window.open(
+    `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`,
+    "_blank"
+  );
+};
+
+
   const services = [
     {
       icon: <Car />,
@@ -293,9 +405,16 @@ Thank you!`;
     },
   ];
 
+  const averageRating =
+    reviews.length > 0
+      ? (
+          reviews.reduce((total, item) => total + item.rating, 0) /
+          reviews.length
+        ).toFixed(1)
+      : "0.0";
+
   return (
     <div className="website">
-
       {/* TOP BAR */}
       <div className="topbar">
         <span>Premium Travel & Taxi Services</span>
@@ -325,6 +444,8 @@ Thank you!`;
           <a href="#services" onClick={closeMenu}>Services</a>
           <a href="#destinations" onClick={closeMenu}>Destinations</a>
           <a href="#fleet" onClick={closeMenu}>Our Fleet</a>
+          <a href="#stay" onClick={closeMenu}>Stay Rooms</a>
+          <a href="#reviews" onClick={closeMenu}>Reviews</a>
           <a href="#contact" onClick={closeMenu}>Contact</a>
           <a href="#booking" className="nav-button" onClick={closeMenu}>
             Book Your Trip
@@ -333,24 +454,20 @@ Thank you!`;
       </header>
 
       <main>
-
         {/* HERO */}
         <section className="hero" id="home">
           <div className="hero-content">
             <span className="eyebrow">YOUR JOURNEY, OUR PRIORITY</span>
-
             <h1>
               Explore The World.
               <br />
               <span>Travel With Comfort.</span>
             </h1>
-
             <p>
               Discover beautiful destinations with SRI RAM HOLIDAYS.
               Enjoy comfortable journeys, trusted taxi services and
               memorable holidays.
             </p>
-
             <div className="hero-buttons">
               <a href="#booking" className="primary-btn">
                 Book Your Journey <ArrowRight size={18} />
@@ -359,7 +476,6 @@ Thank you!`;
                 Explore Destinations
               </a>
             </div>
-
             <div className="hero-features">
               <span><ShieldCheck /> Safe Travel</span>
               <span><Clock /> Reliable Service</span>
@@ -375,7 +491,6 @@ Thank you!`;
             <h2>Travel Services For Every Journey</h2>
             <p>From local rides to memorable holidays.</p>
           </div>
-
           <div className="service-grid">
             {services.map((service) => (
               <article className="service-card" key={service.title}>
@@ -394,7 +509,6 @@ Thank you!`;
             <h2>Popular Destinations</h2>
             <p>Choose a destination and explore its sightseeing attractions.</p>
           </div>
-
           <div className="destination-grid">
             {destinations.map((place) => (
               <article className="destination-card" key={place.name}>
@@ -403,7 +517,6 @@ Thank you!`;
                   <span className="destination-tag">EXPLORE INDIA</span>
                   <h3>{place.name}</h3>
                   <p>{place.subtitle}</p>
-
                   <button
                     className="destination-btn"
                     onClick={() =>
@@ -420,7 +533,7 @@ Thank you!`;
           </div>
         </section>
 
-        {/* NILGIRIS: OOTY AND COONOOR */}
+        {/* NILGIRIS */}
         {selectedRegion && (
           <section className="region-section section" id="region-options">
             <div className="section-heading">
@@ -428,7 +541,6 @@ Thank you!`;
               <h2>{selectedRegion.name}</h2>
               <p>Select the hill station you want to explore.</p>
             </div>
-
             <div className="destination-grid">
               {selectedRegion.locations.map((place) => (
                 <article className="destination-card" key={place.name}>
@@ -437,7 +549,6 @@ Thank you!`;
                     <span className="destination-tag">THE NILGIRIS</span>
                     <h3>{place.name}</h3>
                     <p>{place.subtitle}</p>
-
                     <button
                       className="destination-btn"
                       onClick={() => openDestination(place)}
@@ -448,7 +559,6 @@ Thank you!`;
                 </article>
               ))}
             </div>
-
             <button
               className="gallery-back-btn"
               onClick={() => setSelectedRegion(null)}
@@ -466,17 +576,14 @@ Thank you!`;
               <h2>{selectedDestination.name} Sightseeing</h2>
               <p>Select the places you would like to visit.</p>
             </div>
-
             <div className="sightseeing-grid">
               {selectedDestination.places.map((place) => (
                 <article className="sightseeing-card" key={place.name}>
                   <div className="sightseeing-image">
                     <img src={place.image} alt={place.name} />
                   </div>
-
                   <div className="sightseeing-content">
                     <h3>{place.name}</h3>
-
                     <label className="place-select">
                       <input
                         type="checkbox"
@@ -494,20 +601,17 @@ Thank you!`;
                 </article>
               ))}
             </div>
-
             <div className="gallery-actions">
               <p>
                 <strong>{selectedPlaces.length}</strong> sightseeing places
                 selected
               </p>
-
               <button
                 className="gallery-back-btn"
                 onClick={() => setSelectedPlaces([])}
               >
                 Clear Selection
               </button>
-
               <button
                 className="destination-btn"
                 onClick={() => {
@@ -520,7 +624,6 @@ Thank you!`;
                 Book Your Trip <ArrowRight size={16} />
               </button>
             </div>
-
             <button
               className="gallery-back-btn"
               onClick={() => {
@@ -543,7 +646,6 @@ Thank you!`;
             <h2>Customize Your Trip</h2>
             <p>Choose your travel details. You decide how many days you need.</p>
           </div>
-
           <div className="booking-fields">
             <label>
               <MapPin />
@@ -556,7 +658,6 @@ Thank you!`;
                 />
               </span>
             </label>
-
             <label>
               <Compass />
               <span>
@@ -568,7 +669,6 @@ Thank you!`;
                 />
               </span>
             </label>
-
             <label>
               <Clock />
               <span>
@@ -580,7 +680,6 @@ Thank you!`;
                 />
               </span>
             </label>
-
             <label>
               <Mountain />
               <span>
@@ -594,7 +693,6 @@ Thank you!`;
                 />
               </span>
             </label>
-
             <label>
               <Users />
               <span>
@@ -613,7 +711,6 @@ Thank you!`;
                 </select>
               </span>
             </label>
-
             <label className="special-request">
               <Mail />
               <span>
@@ -625,7 +722,6 @@ Thank you!`;
                 />
               </span>
             </label>
-
             <div className="booking-selected">
               <strong>Selected Sightseeing Places</strong>
               <p>
@@ -634,7 +730,6 @@ Thank you!`;
                   : "No sightseeing places selected yet."}
               </p>
             </div>
-
             <button className="search-btn" onClick={handleBooking}>
               Send WhatsApp Enquiry <ArrowRight />
             </button>
@@ -648,7 +743,6 @@ Thank you!`;
             <h2>Our Premium Fleet</h2>
             <p>The right vehicle for every journey.</p>
           </div>
-
           <div className="fleet-grid">
             {vehicles.map((vehicle) => (
               <article className="fleet-card" key={vehicle.name}>
@@ -656,7 +750,6 @@ Thank you!`;
                 <div className="fleet-card-content">
                   <h3>{vehicle.name}</h3>
                   <p>{vehicle.type}</p>
-
                   <button
                     onClick={() => {
                       setDestination(vehicle.name);
@@ -673,38 +766,215 @@ Thank you!`;
           </div>
         </section>
 
+{/* STAY ROOM AVAILABILITY */}
+<section className="stay-section section" id="stay">
+  <div className="section-heading">
+    <span>COMFORTABLE STAYS</span>
+    <h2>Find Your Stay</h2>
+    <p>Enquire about room availability at your favourite destination.</p>
+  </div>
+
+  <div className="stay-form">
+    <label>
+      Destination
+      <select
+        value={stayDestination}
+        onChange={(e) => setStayDestination(e.target.value)}
+      >
+        <option>Ooty</option>
+        <option>Coonoor</option>
+        <option>Kodaikanal</option>
+        <option>Munnar</option>
+        <option>Kerala</option>
+        <option>Coorg</option>
+        <option>Mysore</option>
+      </select>
+    </label>
+
+    <label>
+      Check-in Date
+      <input
+        type="date"
+        min={new Date().toISOString().split("T")[0]}
+        value={checkIn}
+        onChange={(e) => setCheckIn(e.target.value)}
+      />
+    </label>
+
+    <label>
+      Check-out Date
+      <input
+        type="date"
+        min={checkIn || new Date().toISOString().split("T")[0]}
+        value={checkOut}
+        onChange={(e) => setCheckOut(e.target.value)}
+      />
+    </label>
+
+    <label>
+      Number of Guests
+      <input
+        type="number"
+        min="1"
+        max="30"
+        value={guestCount}
+        onChange={(e) => setGuestCount(Number(e.target.value))}
+      />
+    </label>
+
+    <label>
+      Number of Rooms
+      <input
+        type="number"
+        min="1"
+        max="10"
+        value={roomCount}
+        onChange={(e) => setRoomCount(Number(e.target.value))}
+      />
+    </label>
+
+    <button
+      className="search-btn"
+      onClick={handleStayEnquiry}
+    >
+      Check Room Availability <ArrowRight />
+    </button>
+
+    <p className="stay-note">
+      Room availability will be confirmed by our team through WhatsApp.
+    </p>
+  </div>
+</section>
+
+
         {/* WHY CHOOSE US */}
         <section className="why-us section">
           <div className="section-heading">
             <span>WHY TRAVEL WITH US</span>
             <h2>Your Journey Matters To Us</h2>
           </div>
-
           <div className="why-grid">
             <div>
               <ShieldCheck />
               <h3>Trusted Service</h3>
               <p>Customer-focused travel assistance.</p>
             </div>
-
             <div>
               <Car />
               <h3>Comfortable Vehicles</h3>
               <p>Vehicle options for different group sizes.</p>
             </div>
-
             <div>
               <Clock />
               <h3>Flexible Planning</h3>
               <p>Trips planned around your requirements.</p>
             </div>
-
             <div>
               <Users />
               <h3>Personal Support</h3>
               <p>Assistance throughout your booking enquiry.</p>
             </div>
           </div>
+        </section>
+
+        {/* CUSTOMER REVIEWS */}
+        <section className="reviews-section section" id="reviews">
+          <div className="section-heading">
+            <span>SHARE YOUR EXPERIENCE</span>
+            <h2>Customer Reviews</h2>
+            <p>
+              We would love to hear about your journey with SRI RAM HOLIDAYS.
+            </p>
+          </div>
+
+          <div className="reviews-summary">
+            <h3>
+              {averageRating} <Star size={20} fill="currentColor" />
+            </h3>
+            <p>Based on {reviews.length} customer reviews</p>
+          </div>
+
+          <div className="reviews-grid">
+            {reviewsLoading ? (
+              <p className="no-reviews">Loading customer reviews...</p>
+            ) : reviews.length > 0 ? (
+              reviews.map((item) => (
+                <article className="review-card" key={item.id}>
+                  <h3>{item.customer_name}</h3>
+                  <div className="review-stars">
+                    {Array.from({ length: 5 }, (_, index) => (
+                      <Star
+                        key={index}
+                        size={18}
+                        fill={index < item.rating ? "currentColor" : "none"}
+                      />
+                    ))}
+                  </div>
+                  <p>{item.review}</p>
+                  <small>
+                    {new Date(item.created_at).toLocaleDateString()}
+                  </small>
+                </article>
+              ))
+            ) : (
+              <p className="no-reviews">
+                No reviews yet. Be the first to share your experience!
+              </p>
+            )}
+          </div>
+
+          <form className="review-form" onSubmit={handleReviewSubmit}>
+            <h3>Write a Review</h3>
+
+            <label>
+              Your Name
+              <input
+                type="text"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Enter your name"
+                minLength="2"
+                maxLength="60"
+                required
+              />
+            </label>
+
+            <label>
+              Your Rating
+              <select
+                value={customerRating}
+                onChange={(e) => setCustomerRating(Number(e.target.value))}
+              >
+                <option value={5}>★★★★★ - Excellent</option>
+                <option value={4}>★★★★ - Very Good</option>
+                <option value={3}>★★★ - Good</option>
+                <option value={2}>★★ - Fair</option>
+                <option value={1}>★ - Poor</option>
+              </select>
+            </label>
+
+            <label>
+              Your Review
+              <textarea
+                value={customerReview}
+                onChange={(e) => setCustomerReview(e.target.value)}
+                placeholder="Share your travel experience..."
+                minLength="10"
+                maxLength="1000"
+                required
+              />
+            </label>
+
+            <button type="submit" disabled={reviewLoading}>
+              {reviewLoading ? "Submitting..." : "Submit Review"}
+            </button>
+
+            {reviewMessage && (
+              <p className="review-message" role="status">
+                {reviewMessage}
+              </p>
+            )}
+          </form>
         </section>
 
         {/* CONTACT */}
@@ -715,12 +985,10 @@ Thank you!`;
             Contact SRI RAM HOLIDAYS for comfortable journeys
             and memorable holidays.
           </p>
-
           <div className="contact-details">
             <a href="tel:+918610731075">
               <Phone /> Call Us
             </a>
-
             <a
               href="https://wa.me/918610731075"
               target="_blank"
@@ -728,7 +996,6 @@ Thank you!`;
             >
               <Phone /> WhatsApp Us
             </a>
-
             <a href="mailto:sriramholidays02@gmail.com">
               <Mail /> Email Us
             </a>
@@ -740,21 +1007,20 @@ Thank you!`;
       <footer>
         <h3>SRI RAM HOLIDAYS</h3>
         <p>Dream It. Pack It. Live It.</p>
-
         <div className="footer-links">
           <a href="#home">Home</a>
           <a href="#services">Services</a>
           <a href="#destinations">Destinations</a>
           <a href="#fleet">Our Fleet</a>
+          <a href="#stay">Stay Rooms</a>
+          <a href="#reviews">Reviews</a>
           <a href="#contact">Contact</a>
         </div>
-
         <p>
           <a href="mailto:sriramholidays02@gmail.com">
             sriramholidays02@gmail.com
           </a>
         </p>
-
         <small>© 2026 SRI RAM HOLIDAYS. All Rights Reserved.</small>
       </footer>
     </div>
